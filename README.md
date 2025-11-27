@@ -85,7 +85,6 @@ Value Statement:
 
 Installation:
 # Clone repository
-git clone https://github.com/<your-username>/campusnest.git
 cd campusnest
 # Install dependencies
 pip install -r requirements.txt
