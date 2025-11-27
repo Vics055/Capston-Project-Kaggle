@@ -7,14 +7,14 @@ CampusNest is an AI-based chatbot designed to assist students in finding suitabl
 
 
 
-Problem Statement
+Problem Statement:
 Students relocating to new cities face difficulties in:
    - Identifying safe and budget-friendly accommodations.
    - Searching manually across multiple websites.
    - Filtering based on meals, distance, and gender.
    - Getting instant answers and personalized guidance.
 
-Solution Statement
+Solution Statement:
 CampusNest solves these issues by:
     - Using AI to extract user preferences automatically.
     - Searching listings from structured data based on exact criteria.
@@ -85,9 +85,17 @@ Value Statement:
 
 
 Installation:
-# Clone repository
-cd campusnest
-# Install dependencies
+import numpy as np       # linear algebra
+import pandas as pd      # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
 pip install -r requirements.txt
 # (For Kaggle users) Add API key in secrets and run via notebook
 !pip install "google-generativeai==0.5.4"
