@@ -73,7 +73,7 @@ Can be triggered by follow-up user message within the chat flow.
 
 
 Conclusion:
-CampusNest provides a smart, fast, and student-friendly solution for accommodation search. It reduces manual work, understands conversational requests, and dynamically adapts recommendations. The structured framework makes it scalable for integration with real property databases and university systems.
+CampusNest offers an intelligent and user-friendly solution to help students find suitable accommodations near their educational institutions. By leveraging Gemini AI and a multi-agent architecture, it ensures accurate preference extraction and personalized recommendations. The system reduces manual effort by automating search, filtering, and summarization processes in real time. Its scalable design allows easy integration with live property databases, user authentication, and location-based mapping services in the future. With conversational interaction and continuous learning via memory, CampusNest enhances user experience and decision-making. Overall, the project demonstrates how AI can transform traditional accommodation search into a seamless and efficient digital experience.
 
 
 Value Statement:
