@@ -6,6 +6,7 @@ CampusNest is an AI-based chatbot designed to assist students in finding suitabl
 
 
 
+
 Problem Statement
 Students relocating to new cities face difficulties in:
    - Identifying safe and budget-friendly accommodations.
