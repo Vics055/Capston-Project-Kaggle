@@ -146,4 +146,4 @@ Workflow:
 7. Reply is saved into history.
 8. Chat continues and improves based on previous context.
 9. User may request more details/images/contact.
-10.Chat session ends or loops with refined queries.
+10. Chat session ends or loops with refined queries.
