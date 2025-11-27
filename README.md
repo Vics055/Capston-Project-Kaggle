@@ -1,5 +1,8 @@
-<img width="1024" height="1024" alt="CampusNest" src="https://github.com/user-attachments/assets/401d1563-6c94-46e7-9160-acd630be818e" /><img width="1024" height="1024" alt="CampusNest" src="https://github.com/user-attachments/assets/c9c43e1f-bfd2-459c-a0be-91d1f38e29b5" />Project Overview - CampusNest
+Project Overview - CampusNest
 CampusNest is an AI-based chatbot designed to assist students in finding suitable PGs, hostels, and flats near their college/university. It uses Google Gemini LLM, dynamically extracts user preferences using intelligent agents, matches properties using built-in dataset filters, and provides conversational recommendations. The system maintains session memory to improve results over time.
+![Uploading CampusNest.png…]()
+
+
 
 Problem Statement
 Students relocating to new cities face difficulties in:
