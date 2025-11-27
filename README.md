@@ -16,17 +16,17 @@ Students relocating to new cities face difficulties in:
 
 Solution Statement:
 CampusNest solves these issues by:
-    - Using AI to extract user preferences automatically.
-    - Searching listings from structured data based on exact criteria.
-    - Generating human-like summaries and interactions.
-    - Providing instant details like cost, distance, meals, and contact info.
-    - Continuously remembering the user’s responses to refine results.
+   - Using AI to extract user preferences automatically.
+   - Searching listings from structured data based on exact criteria.
+   - Generating human-like summaries and interactions.
+   - Providing instant details like cost, distance, meals, and contact info.
+   - Continuously remembering the user’s responses to refine results.
 
 Architecture:
-    - The CampusNest architecture follows a modular AI agent flow, where the user interacts through the main campusnest_chat function.
-    - The PreferenceAgent extracts user preferences using Gemini and updates session memory.
-    - The SearchAgent filters accommodation listings using these preferences and retrieves relevant results.
-    - Finally, the SummaryAgent generates a conversational response using Gemini, summarizing and presenting the best recommendations.
+   - The CampusNest architecture follows a modular AI agent flow, where the user interacts through the main campusnest_chat function.
+   - The PreferenceAgent extracts user preferences using Gemini and updates session memory.
+   - The SearchAgent filters accommodation listings using these preferences and retrieves relevant results.
+   - Finally, the SummaryAgent generates a conversational response using Gemini, summarizing and presenting the best recommendations.
 
 <img width="1536" height="1024" alt="Architecture CampusNest" src="https://github.com/user-attachments/assets/6670e9c1-7f1c-4b66-9a37-4c1cf37a4472" />
 
