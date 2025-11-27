@@ -1,0 +1,525 @@
+#Cell 1:
+
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+
+# Cell 2:
+
+!pip install "google-generativeai==0.5.4"
+
+
+#Cell 2:
+
+import google.generativeai as genai
+print("Library installed successfully!")
+
+#Cell 3:
+
+from kaggle_secrets import UserSecretsClient
+import os
+
+# Access the Kaggle secrets
+user_secrets = UserSecretsClient()
+
+# Fetch the API key via its LABEL
+os.environ["GOOGLE_API_KEY"] = user_secrets.get_secret("GOOGLE_API_KEY")
+
+print("API Key setup successfully!")
+
+
+#Cell 4:
+
+import os
+print(os.environ["GOOGLE_API_KEY"][:5] + "*****")  # Masked output
+
+
+#Cell 5:
+
+# ---- Install Gemini library (only needed once per notebook run) ----
+!pip install -q google-generativeai
+
+# ---- Standard imports ----
+import os                        # For reading environment variables (API key)
+import pandas as pd              # For working with tabular data (our PG/hostel list)
+
+# ---- Kaggle secret handling ----
+from kaggle_secrets import UserSecretsClient
+
+# ---- Gemini (Google) LLM library ----
+import google.generativeai as genai
+
+
+#Cell 6:
+
+import google.generativeai as genai
+import pandas as pd
+import os
+
+print("Google Generative AI version:", genai.__version__)
+print("Pandas version:", pd.__version__)
+
+
+
+#Cell 7:
+
+# ---- Load API key from Kaggle Secrets ----
+user_secrets = UserSecretsClient()                         # Create a helper object to read secrets
+api_key = user_secrets.get_secret("GOOGLE_API_KEY")        # Read the secret named GOOGLE_API_KEY
+os.environ["GOOGLE_API_KEY"] = api_key                     # Store it in environment variables
+print("API Key loaded successfully from Kaggle Secrets")
+
+# ---- Configure Gemini client ----
+genai.configure(api_key=api_key)                           # Tell the library which key to use
+print("Gemini client configured successfully")
+
+# ---- Set model name ----
+
+MODEL_NAME = "gemini-1.5-flash-latest"
+
+print(f"Model name set to: {MODEL_NAME}")
+
+
+
+#Cell 8:
+
+# ---- Sample dataset of PG / Hostel / Flats ----
+data = [
+    {
+        "id": 1,
+        "name": "GreenView PG",
+        "type": "PG",
+        "city": "Bangalore",
+        "nearby_college": "Presidency University",
+        "gender": "Any",
+        "price_per_month": 6500,
+        "distance_km": 1.2,
+        "meals_included": True,
+        "image_url": "https://example.com/greenview.jpg",
+        "contact": "+91-9876543210"
+    },
+    {
+        "id": 2,
+        "name": "Sunrise Girls Hostel",
+        "type": "Hostel",
+        "city": "Bangalore",
+        "nearby_college": "Presidency University",
+        "gender": "Female",
+        "price_per_month": 8000,
+        "distance_km": 0.8,
+        "meals_included": True,
+        "image_url": "https://example.com/sunrise.jpg",
+        "contact": "+91-9123456780"
+    },
+    {
+        "id": 3,
+        "name": "TechNest Flats",
+        "type": "Flat",
+        "city": "Bangalore",
+        "nearby_college": "Presidency University",
+        "gender": "Any",
+        "price_per_month": 12000,
+        "distance_km": 2.5,
+        "meals_included": False,
+        "image_url": "https://example.com/technest.jpg",
+        "contact": "+91-9988776655"
+    },
+]
+
+print("Sample data created successfully")
+
+# Convert the Python list into a pandas DataFrame
+listings_df = pd.DataFrame(data)
+
+# Print verification message
+print("DataFrame created successfully")
+print("Sample preview of data:")
+print(listings_df.head())  # Show the first few rows
+
+
+#Cell 9:
+
+# ---- Simple memory class to store session state ----
+class CampusMemory:
+    def __init__(self):
+        # Store user preferences like city, budget, gender, etc.
+        self.preferences = {
+            "city": None,
+            "nearby_college": None,
+            "max_budget": None,
+            "gender": None,
+            "wants_meals": None,
+        }
+        # Store conversation history as a list of messages
+        self.history = []
+        # Store last search results (list of listing IDs)
+        self.last_results = []
+
+    def add_message(self, role, content):
+        """Save one message into the history."""
+        self.history.append({"role": role, "content": content})
+
+
+# -------- Code execution verification --------
+try:
+    memory = CampusMemory()  # Create an object
+    print("CampusMemory object created successfully")
+
+    # Test the add_message function
+    memory.add_message("user", "Hello, testing memory class!")
+    print("add_message() method executed successfully")
+
+    # Print stored message
+    print("Stored history after test:")
+    print(memory.history)
+
+    print("\nFinal Status: Class executed successfully and working fine!")
+except Exception as e:
+    print("Error while executing class or method")
+    print("Details:", e)
+
+
+
+#Cell 10:
+
+
+# ---- Custom tool: search listings based on preferences ----
+def search_listings_tool(preferences, df, max_results=3):
+    """
+    Filter the listings DataFrame using the current preferences.
+    """
+    results = df.copy()
+
+    # Filter by city if given
+    if preferences.get("city"):
+        results = results[results["city"].str.lower() == preferences["city"].lower()]
+
+    # Filter by nearby college if given
+    if preferences.get("nearby_college"):
+        results = results[
+            results["nearby_college"].str.lower()
+            == preferences["nearby_college"].lower()
+        ]
+
+    # Filter by gender preference if given
+    if preferences.get("gender"):
+        gender = preferences["gender"].capitalize()
+        results = results[
+            (results["gender"] == gender) | (results["gender"] == "Any")
+        ]
+
+    # Filter by budget if given
+    if preferences.get("max_budget"):
+        results = results[results["price_per_month"] <= preferences["max_budget"]]
+
+    # Filter by meals if given
+    if preferences.get("wants_meals") is not None:
+        results = results[results["meals_included"] == preferences["wants_meals"]]
+
+    # Sort by distance and pick top N
+    results = results.sort_values("distance_km").head(max_results)
+
+    return results.to_dict(orient="records")
+
+
+# ---- Custom tool: get details about a specific listing ----
+def get_listing_details_tool(listing_id, df):
+    """
+    Return a single listing's details by ID.
+    """
+    row = df[df["id"] == listing_id]
+    if row.empty:
+        return None
+    return row.iloc[0].to_dict()
+
+
+# ---- Verification Code ----
+try:
+    print("Functions defined successfully")
+
+    # Sample preference to test search
+    test_preferences = {
+        "city": "Bangalore",
+        "nearby_college": "ABC University",
+        "max_budget": 7000,
+        "gender": "Any",
+        "wants_meals": True
+    }
+
+    # Test search function
+    search_results = search_listings_tool(test_preferences, listings_df)
+    print("search_listings_tool executed successfully")
+    print("Sample search result:", search_results)
+
+    # Test listing details function
+    if search_results:
+        listing_id = search_results[0]["id"]
+        details = get_listing_details_tool(listing_id, listings_df)
+        print("get_listing_details_tool executed successfully")
+        print("Listing details:", details)
+    else:
+        print("No results found to test get_listing_details_tool")
+
+    print("\nFinal Status: All tool functions working correctly!")
+
+except Exception as e:
+    print("Error during function execution")
+    print("Details:", e)
+
+
+
+#Cell 11:
+
+MODEL_NAME = "models/gemini-flash-latest"  # or "models/gemini-pro-latest"
+
+def call_gemini(system_prompt, user_prompt):
+    print(f"call_gemini() started... using model: {MODEL_NAME}")
+    
+    model = genai.GenerativeModel(MODEL_NAME)
+    full_prompt = system_prompt + "\n\nUser: " + user_prompt
+    response = model.generate_content(full_prompt)
+    
+   # print("Model responded successfully")
+    return response.text
+
+# ---- Test Execution ----
+try:
+    result = call_gemini(
+        "You are a helpful AI system for PG/hostel recommendations.",
+        "Hi! Just testing if Gemini works now."
+    )
+    print("Function executed successfully!")
+    print("Response:", result)
+
+except Exception as e:
+    print("Error during call_gemini execution")
+    print("Details:", e)
+
+
+#Cell 12:
+
+
+# ---- Agent 1: PreferenceAgent ----
+def preference_agent(user_message, memory):
+    """
+    Use Gemini to extract or update user preferences from the latest message.
+    """
+    print("Running PreferenceAgent...")
+
+    system_prompt = """
+You are the PreferenceAgent for CampusNest.
+
+Your ONLY task is to extract the following preferences from the user's message:
+- city
+- nearby_college
+- max_budget (numeric, in rupees)
+- gender (Male/Female/Any)
+- wants_meals (true/false/null)
+
+⚠️ STRICT INSTRUCTIONS:
+- Respond ONLY with a valid JSON object.
+- NO extra text, no explanation, no markdown, no bullet points.
+- Do NOT include triple backticks (`) or any formatting.
+- If information is unclear, return null for that field.
+
+Correct JSON format example:
+{
+  "city": "Bangalore",
+  "nearby_college": "ABC University",
+  "max_budget": 7000,
+  "gender": "Male",
+  "wants_meals": true
+}
+""".strip()
+
+    # Call Gemini
+    gemini_output = call_gemini(system_prompt, user_message)
+    print("Raw Gemini output:", gemini_output)
+
+    # Try to extract JSON safely
+    import json, re
+    try:
+        json_str = re.search(r"\{[\s\S]*\}", gemini_output).group()
+        new_prefs = json.loads(json_str)
+        print("PreferenceAgent JSON parsed successfully:", new_prefs)
+    except Exception:
+        print("Failed to parse JSON from PreferenceAgent response")
+        print("Raw response:", gemini_output)
+        new_prefs = {}
+
+    for key, value in new_prefs.items():
+        if value is not None:
+            memory.preferences[key] = value
+
+    print("Updated Preferences:", memory.preferences)
+    return memory.preferences
+
+
+
+#Cell 13:
+
+# ---- Agent 3: SummaryAgent ----
+def summary_agent(user_message, memory, listings):
+    """
+    Generates a conversational response summarizing matching listings.
+    """
+    print("Running SummaryAgent...")
+
+    if not listings:
+        return (
+            "I couldn't find any matching PG/hostel/flats based on your preferences. "
+            "You can update your city, budget, gender, or meal preference to get better results."
+        )
+
+    system_prompt = """
+You are the SummaryAgent for CampusNest.
+
+Your task:
+- Provide a friendly summary of available PG/Hostel/Flat listings.
+- Use a conversational tone.
+- Mention the name, type, price, meal availability, and distance.
+- Encourage user to ask for more details or images.
+
+Example response format:
+Here are some recommendations based on your preferences:
+1. GreenView PG – ₹6500/month, meals included, 1.2 km away.
+2. Sunrise Girls Hostel – ₹8000/month, meals included, 0.8 km away.
+
+You can ask for more details, photos, or contact info for any listing.
+""".strip()
+
+    # Format listing data
+    listing_text = "\n".join(
+        [f"{i+1}. {item['name']} – ₹{item['price_per_month']}/month, "
+         f"{'meals included' if item['meals_included'] else 'no meals'}, "
+         f"{item['distance_km']} km away."
+         for i, item in enumerate(listings)]
+    )
+
+    # Build full prompt
+    full_prompt = f"{system_prompt}\n\nListings:\n{listing_text}\n\nUser: {user_message}"
+
+    # Call Gemini
+    try:
+        reply = call_gemini(system_prompt, full_prompt)
+        print("SummaryAgent generated reply using Gemini")
+        return reply
+    except Exception as e:
+        print("Error in SummaryAgent:", e)
+        return "Something went wrong while summarizing results."
+
+
+
+#Cell 14:
+
+# ---- Agent 2: SearchAgent ----
+def search_agent(memory, df):
+    """
+    Uses the user's stored preferences to find matching PG/Hostel/Flat listings.
+    """
+    print("Running SearchAgent...")
+
+    preferences = memory.preferences
+    results = search_listings_tool(preferences, df)
+
+    # Save the last search results (listing IDs only)
+    memory.last_results = [item["id"] for item in results]
+
+    print("SearchAgent Results:", results)
+    return results
+
+
+#Cell 15:
+
+# ---- Create a single memory object for the whole session ----
+memory = CampusMemory()
+print("CampusMemory session initialized successfully")
+
+
+def campusnest_chat(user_message):
+    """
+    Main orchestrator function:
+    1. Save user message to history.
+    2. Run PreferenceAgent to update preferences.
+    3. Run SearchAgent to get matching listings.
+    4. Run SummaryAgent to generate final reply.
+    """
+    print("\nStarting campusnest_chat() with user message:")
+    print(f"'{user_message}'")
+
+    # 1. Store message in session history
+    memory.add_message("user", user_message)
+    print("Message added to memory history")
+
+    # 2. Update preferences using the PreferenceAgent
+    updated_prefs = preference_agent(user_message, memory)
+    print("Preferences updated")
+
+    # 3. Search for listings using SearchAgent and custom tool
+    results = search_agent(memory, listings_df)
+    print(f"SearchAgent found {len(results)} result(s)")
+
+    if not results:
+        print("No matches found! Suggest updating dataset or user criteria.")
+
+    # 4. Generate answer using SummaryAgent
+    reply = summary_agent(user_message, memory, results)
+    print("SummaryAgent generated response")
+
+    # 5. Save assistant reply in history
+    memory.add_message("assistant", reply)
+    print("Assistant reply stored in memory")
+
+    print("campusnest_chat() completed successfully")
+    return reply
+
+
+# ---- Quick demo: manually call the chat function ----
+try:
+    demo_message = "I am a girl joining Presidency University in Bangalore, budget around 6500, I want food also."
+    print("\nRunning Demo Message for CampusNest chat...")
+    reply_text = campusnest_chat(demo_message)
+
+    print("\n=========================================")
+    print("FINAL AI RESPONSE TO USER:")
+    print("=========================================")
+    print(reply_text)
+    print("\nDemo executed successfully!")
+
+except Exception as e:
+    print("Error during execution of campusnest_chat()")
+    print("Details:", e)
+
+
+#Cell 16:
+
+test_messages = [
+    "Hello",
+    "Show details of GreenView PG",
+    "I want a PG near Presidency University, budget 6500",
+    "exit"
+]
+
+for user_text in test_messages:
+    if user_text.lower() in ["exit", "quit"]:
+        print("Exiting chat simulation.")
+        break
+    print(f"\nYou: {user_text}")
+    answer = campusnest_chat(user_text)
+    print("\nCampusNest:", answer, "\n")
+
